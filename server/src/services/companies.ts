@@ -353,7 +353,7 @@ export function companyService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
 
         const { logoAssetId, ...rawCompanyPatch } = data;
         const governancePatch = rawCompanyPatch.interactionResolverGovernance;
-        const companyPatch = governancePatch === undefined
+        const companyPatch = governancePatch === undefined || actor.actorType !== "agent"
           ? rawCompanyPatch
           : {
               ...rawCompanyPatch,
