@@ -314,27 +314,14 @@ describe("PATCH /api/companies/:companyId", () => {
     }));
   });
 
-  it("allows CEO agent callers to update interaction resolver governance without clearing other kinds", async () => {
-    const existingGovernance = {
-      ask_user_questions: {
-        defaultPolicy: "human_only",
-        cap: "human_only",
-      },
-    };
+  it("allows CEO agent callers to update interaction resolver governance", async () => {
     const requestedGovernance = {
       request_confirmation: {
         defaultPolicy: "not_creator",
         cap: "not_creator",
       },
     };
-    const governance = {
-      ...existingGovernance,
-      ...requestedGovernance,
-    };
-    const company = {
-      ...createCompany(),
-      interactionResolverGovernance: existingGovernance,
-    };
+    const company = createCompany();
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
@@ -343,7 +330,7 @@ describe("PATCH /api/companies/:companyId", () => {
     mockCompanyService.getById.mockResolvedValue(company);
     mockCompanyService.update.mockResolvedValue({
       ...company,
-      interactionResolverGovernance: governance,
+      interactionResolverGovernance: requestedGovernance,
     });
     const app = await createApp({
       type: "agent",
@@ -358,10 +345,10 @@ describe("PATCH /api/companies/:companyId", () => {
       .send({ interactionResolverGovernance: requestedGovernance });
 
     expect(res.status).toBe(200);
-    expect(res.body.interactionResolverGovernance).toEqual(governance);
+    expect(res.body.interactionResolverGovernance).toEqual(requestedGovernance);
     expect(mockCompanyService.update).toHaveBeenCalledWith(
       "company-1",
-      { interactionResolverGovernance: governance },
+      { interactionResolverGovernance: requestedGovernance },
       expect.objectContaining({ actorType: "agent", actorId: "agent-1" }),
     );
     expect(mockLogActivity).toHaveBeenCalledWith(
@@ -371,7 +358,7 @@ describe("PATCH /api/companies/:companyId", () => {
         actorType: "agent",
         actorId: "agent-1",
         action: "company.updated",
-        details: { interactionResolverGovernance: governance },
+        details: { interactionResolverGovernance: requestedGovernance },
       }),
     );
   });

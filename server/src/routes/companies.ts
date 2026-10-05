@@ -1262,15 +1262,7 @@ export function companyRoutes(db: Db, storage?: StorageService, options?: Compan
       return;
     }
 
-    if (req.actor.type === "agent" && body.interactionResolverGovernance !== undefined) {
-      body = {
-        ...body,
-        interactionResolverGovernance: {
-          ...existingCompany.interactionResolverGovernance,
-          ...(body.interactionResolverGovernance as Record<string, unknown>),
-        },
-      };
-    } else if (req.actor.type !== "agent") {
+    if (req.actor.type !== "agent") {
       if (body.feedbackDataSharingEnabled === true && !existingCompany.feedbackDataSharingEnabled) {
         body = {
           ...body,
