@@ -314,6 +314,55 @@ describe("PATCH /api/companies/:companyId", () => {
     }));
   });
 
+  it("allows CEO agent callers to update interaction resolver governance", async () => {
+    const governance = {
+      request_confirmation: {
+        defaultPolicy: "not_creator",
+        cap: "not_creator",
+      },
+    };
+    const company = createCompany();
+    mockAgentService.getById.mockResolvedValue({
+      id: "agent-1",
+      companyId: "company-1",
+      role: "ceo",
+    });
+    mockCompanyService.getById.mockResolvedValue(company);
+    mockCompanyService.update.mockResolvedValue({
+      ...company,
+      interactionResolverGovernance: governance,
+    });
+    const app = await createApp({
+      type: "agent",
+      agentId: "agent-1",
+      companyId: "company-1",
+      source: "agent_key",
+      runId: "run-1",
+    });
+
+    const res = await request(app)
+      .patch("/api/companies/company-1")
+      .send({ interactionResolverGovernance: governance });
+
+    expect(res.status).toBe(200);
+    expect(res.body.interactionResolverGovernance).toEqual(governance);
+    expect(mockCompanyService.update).toHaveBeenCalledWith(
+      "company-1",
+      { interactionResolverGovernance: governance },
+      expect.objectContaining({ actorType: "agent", actorId: "agent-1" }),
+    );
+    expect(mockLogActivity).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        companyId: "company-1",
+        actorType: "agent",
+        actorId: "agent-1",
+        action: "company.updated",
+        details: { interactionResolverGovernance: governance },
+      }),
+    );
+  });
+
   it("rejects CEO agent attempts to update lifecycle, budget, consent, or prefix fields", async () => {
     const company = createCompany();
     mockAgentService.getById.mockResolvedValue({
