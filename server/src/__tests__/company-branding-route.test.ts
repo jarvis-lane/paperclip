@@ -314,14 +314,27 @@ describe("PATCH /api/companies/:companyId", () => {
     }));
   });
 
-  it("allows CEO agent callers to update interaction resolver governance", async () => {
-    const governance = {
+  it("allows CEO agent callers to update interaction resolver governance without clearing other kinds", async () => {
+    const existingGovernance = {
+      ask_user_questions: {
+        defaultPolicy: "human_only",
+        cap: "human_only",
+      },
+    };
+    const requestedGovernance = {
       request_confirmation: {
         defaultPolicy: "not_creator",
         cap: "not_creator",
       },
     };
-    const company = createCompany();
+    const governance = {
+      ...existingGovernance,
+      ...requestedGovernance,
+    };
+    const company = {
+      ...createCompany(),
+      interactionResolverGovernance: existingGovernance,
+    };
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
@@ -342,7 +355,7 @@ describe("PATCH /api/companies/:companyId", () => {
 
     const res = await request(app)
       .patch("/api/companies/company-1")
-      .send({ interactionResolverGovernance: governance });
+      .send({ interactionResolverGovernance: requestedGovernance });
 
     expect(res.status).toBe(200);
     expect(res.body.interactionResolverGovernance).toEqual(governance);
